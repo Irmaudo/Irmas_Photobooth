@@ -7,7 +7,17 @@ const countdownEl = document.getElementById("countdown");
 
 // ----------------- GRAIN IMAGE -----------------
 const grainImg = new Image();
+grainImg.crossOrigin = "anonymous"; // Belangrijk voor GitHub Pages
 grainImg.src = "images/krassen.jpg";
+
+let grainLoaded = false;
+grainImg.onload = () => {
+  grainLoaded = true;
+  console.log("Grain image geladen!");
+};
+grainImg.onerror = () => {
+  console.error("Kon grain image niet laden!");
+};
 
 // ----------------- CAMERA TOEGANG -----------------
 navigator.mediaDevices.getUserMedia({ video: true })
@@ -15,7 +25,6 @@ navigator.mediaDevices.getUserMedia({ video: true })
     video.srcObject = stream;
     video.play();
 
-    // Voeg live subtiele grain toe als video klaar is
     video.addEventListener("loadedmetadata", addLiveGrain);
   })
   .catch((err) => {
@@ -40,9 +49,11 @@ function addLiveGrain() {
 
     function draw() {
         octx.clearRect(0, 0, overlay.width, overlay.height);
-        octx.globalAlpha = 0.05; // subtiel
-        octx.drawImage(grainImg, 0, 0, overlay.width, overlay.height);
-        octx.globalAlpha = 1;
+        if (grainLoaded) {
+            octx.globalAlpha = 0.05;
+            octx.drawImage(grainImg, 0, 0, overlay.width, overlay.height);
+            octx.globalAlpha = 1;
+        }
         requestAnimationFrame(draw);
     }
 
@@ -80,6 +91,11 @@ captureBtn.addEventListener("click", () => {
 
 // ----------------- FUNCTIE OM FOTO TE MAKEN MET GRAIN -----------------
 function takePhoto() {
+    if (!grainLoaded) {
+        alert("Grain image nog niet geladen, probeer opnieuw.");
+        return;
+    }
+
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -101,31 +117,25 @@ function takePhoto() {
         let g = data[i + 1];
         let b = data[i + 2];
 
-        // Grayscale 90%
         const gray = r*0.033 + g*0.033 + b*0.033 + 0.9*(r+g+b)/3;
 
-        // Sepia 30%
         const sepiaR = gray*0.7 + 0.3*(r*0.393 + g*0.769 + b*0.189);
         const sepiaG = gray*0.7 + 0.3*(r*0.349 + g*0.686 + b*0.168);
         const sepiaB = gray*0.7 + 0.3*(r*0.272 + g*0.534 + b*0.131);
 
-        // Contrast 120%
         const factor = (259 * (120 + 255)) / (255 * (259 - 120));
         let rC = factor*(sepiaR-128)+128;
         let gC = factor*(sepiaG-128)+128;
         let bC = factor*(sepiaB-128)+128;
 
-        // Brightness 0.7
         rC *= 0.7; gC *= 0.7; bC *= 0.7;
 
-        // Saturate 0.2
         const avg = (rC + gC + bC)/3;
         const saturateFactor = 0.6;
         rC = avg + (rC - avg) * saturateFactor;
         gC = avg + (gC - avg) * saturateFactor;
         bC = avg + (bC - avg) * saturateFactor;
 
-        // Clamp waarden
         data[i] = Math.min(255, Math.max(0, rC));
         data[i+1] = Math.min(255, Math.max(0, gC));
         data[i+2] = Math.min(255, Math.max(0, bC));
@@ -134,7 +144,7 @@ function takePhoto() {
     ctx.putImageData(imgData, 0, 0);
 
     // Subtiele grain toevoegen
-    ctx.globalAlpha = 0.05; // subtiel
+    ctx.globalAlpha = 0.05;
     ctx.drawImage(grainImg, 0, 0, canvas.width, canvas.height);
     ctx.globalAlpha = 1;
 
@@ -160,6 +170,7 @@ function takePhoto() {
 
     photosContainer.appendChild(photoDiv);
 }
+
 
 
 
