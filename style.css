@@ -1,12 +1,12 @@
 /* =============== FONT =============== */
 @font-face {
     font-family: "MyFont";
-    src: url("fonts/Akira Expanded Demo.otf") format("opentype");
+    src: url("Akira Expanded Demo.otf") format("opentype");
 }
 
 @font-face {
     font-family: "TypeWriter";
-    src: url("fonts/AmericanTypewriter.ttc") format("opentype");
+    src: url("AmericanTypewriter.ttc") format("opentype");
 }
 
 /* =============== BODY =============== */
